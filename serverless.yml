@@ -1,0 +1,83 @@
+service: resumesetgo-email-agent
+
+frameworkVersion: "4"
+
+provider:
+  name: aws
+  runtime: python3.12
+  region: us-east-1
+  memorySize: 256
+  timeout: 300
+  logRetentionInDays: 30
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+
+package:
+  patterns:
+    - "!.env"
+    - "!.env.*"
+    - "!**/__pycache__/**"
+    - "!**/*.pyc"
+    - "!*.md"
+    - "!migrations/**"
+    - "!node_modules/**"
+
+functions:
+
+  # ─── Lambda 1: Phase 1 — Plan ───────────────────────────────────────────
+  marketingAgentPlan:
+    handler: agent.handler_plan.marketing_agent_plan
+    description: "Phase 1 — MCP loop, draft emails, push Telegram preview for approval"
+    events:
+      # Daily 9am UTC
+      - schedule:
+          rate: cron(0 9 * * ? *)
+          enabled: true
+      # Manual replan (requires x-api-key header)
+      - http:
+          path: /run
+          method: post
+          private: true
+    environment:
+      SUPABASE_URL: ${env:SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+      ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY}
+      TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
+      TELEGRAM_PREVIEW_MODE: ${env:TELEGRAM_PREVIEW_MODE, "full"}
+      TELEGRAM_FULL_DISPLAY_MAX: ${env:TELEGRAM_FULL_DISPLAY_MAX, "100"}
+      APPROVAL_WINDOW_HOURS: ${env:APPROVAL_WINDOW_HOURS, "2"}
+
+  # ─── Lambda 2: Phase 2 — Send ───────────────────────────────────────────
+  marketingAgentSend:
+    handler: agent.handler_send.marketing_agent_send
+    description: "Phase 2 — Telegram callback handler; dispatches approved email batch"
+    events:
+      # Public endpoint — defended at app layer (webhook secret + chat ID + state check)
+      - http:
+          path: /telegram/callback
+          method: post
+    environment:
+      SUPABASE_URL: ${env:SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+      RESEND_API_KEY: ${env:RESEND_API_KEY}
+      BACKEND_PUBLIC_URL: ${env:BACKEND_PUBLIC_URL}
+      EMAIL_UNSUBSCRIBE_SECRET: ${env:EMAIL_UNSUBSCRIBE_SECRET}
+      TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
+      TELEGRAM_WEBHOOK_SECRET: ${env:TELEGRAM_WEBHOOK_SECRET}

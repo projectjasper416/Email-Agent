@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Dependencies
+node_modules/
+
+# Serverless build artifacts
+.serverless/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
