@@ -46,7 +46,7 @@ functions:
     events:
       # Daily 9am UTC
       - schedule:
-          rate: cron(0 9 * * ? *)
+          rate: cron(0 13 * * ? *)
           enabled: true
       # Manual replan (requires x-api-key header)
       - http:
