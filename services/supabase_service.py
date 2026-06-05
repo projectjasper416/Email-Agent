@@ -244,7 +244,10 @@ def _build_profile(
     free_resume_limit = (sub or {}).get("free_resume_limit", 1)
     free_resume_uses = (sub or {}).get("free_resume_uses", 0)
 
-    tailoring_count = len(tailorings)
+    # resume_ai_tailorings has one row per resume *section*, so len(tailorings)
+    # over-counts. The true number of tailorings the user has run is the quota
+    # counter on the subscription.
+    tailoring_count = free_tailor_uses
     tailorings_remaining = max(0, free_tailor_limit - free_tailor_uses)
 
     # Target role: onboarding first, then resume
