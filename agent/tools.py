@@ -74,8 +74,9 @@ TOOLS = [
             "Choose a campaign_key that is a short snake_case label describing the "
             "angle you are using, e.g. 'hit_tailor_limit_upgrade' or "
             "'skill_gap_found_tailor'. "
-            "The cta_url should be a deep link to the most relevant app page, not "
-            "just the homepage. "
+            "The CTA button always links to the same ResumeSetGo homepage URL — "
+            "https://resumesetgo.in/ — every time. You only write the button label "
+            "(cta_text), not a URL. "
             "Returns {queued: true, run_id, position} confirming the record was saved."
         ),
         "input_schema": {
@@ -109,12 +110,8 @@ TOOLS = [
                     "type": "string",
                     "description": "CTA button label, e.g. 'Tailor my resume now'.",
                 },
-                "cta_url": {
-                    "type": "string",
-                    "description": "Deep link URL for the CTA button.",
-                },
             },
-            "required": ["user_id", "email", "campaign_key", "subject", "body", "cta_text", "cta_url"],
+            "required": ["user_id", "email", "campaign_key", "subject", "body", "cta_text"],
         },
     },
     {

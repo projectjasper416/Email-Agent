@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 # Used to attach signals_snapshot to send_email calls without a second DB round-trip.
 _user_profile_cache: dict[str, dict] = {}
 
+# Every CTA links to the ResumeSetGo homepage. The agent does not choose URLs —
+# this guarantees a valid, correct-domain link on every email.
+CTA_URL = "https://resumesetgo.in/"
+
 
 def execute_tool(
     tool_name: str,
@@ -87,7 +91,7 @@ def _send_email(tool_input: dict, planned_sends: list, run_id: str, counters: di
         "subject": tool_input["subject"],
         "body": tool_input["body"],
         "cta_text": tool_input["cta_text"],
-        "cta_url": tool_input["cta_url"],
+        "cta_url": CTA_URL,
         "signals_snapshot": signals_snapshot,
         "run_id": run_id,
     }
