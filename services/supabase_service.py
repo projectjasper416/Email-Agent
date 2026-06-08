@@ -199,6 +199,19 @@ def get_eligible_users() -> list[dict]:
             linkedin_row=linkedin_by_user.get(user_id),
             wrote_journal=user_id in journal_users,
         )
+
+        # Account-age guardrail vs. the legacy cron.
+        # The legacy cron owns the no-resume / not-tailored campaigns during a
+        # user's first week (it fires on account-age days 3, 5, 7). So within
+        # the first 7 days we stay out of exactly those users (anyone who has
+        # not tailored yet) and let the legacy cron run. Past day 7 — or for
+        # users who have already tailored at any age — the agent is free to
+        # act; the 4-day frequency cap above is what prevents us from doubling
+        # up with the legacy cron's day-30/45 touches.
+        in_legacy_campaign_state = profile["tailoring_count"] == 0
+        if account_age_days < 7 and in_legacy_campaign_state:
+            continue
+
         profiles.append(profile)
 
     logger.info("get_eligible_users: returning %d eligible users", len(profiles))
